@@ -1,0 +1,162 @@
+import React from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    TouchableOpacity
+} from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { registerSchema, RegisterFormData } from '../../schemas/authSchema';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../../store/store';
+import { useRouter } from 'expo-router';
+import Input from '../../components/Input';
+import Button from '../../components/Button';
+import { COLORS } from '../../theme/colors';
+import { SPACING } from '../../theme/spacing';
+
+export default function RegisterScreen() {
+    const router = useRouter();
+    const { loading, error } = useSelector((state: RootState) => state.auth);
+
+    const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
+        resolver: zodResolver(registerSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+            confirmPassword: '',
+        },
+    });
+
+    const onSubmit = async (data: RegisterFormData) => {
+        // For demo purposes, we'll just navigate
+        router.replace('/(tabs)/home');
+    };
+
+    return (
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}
+        >
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>Create Account</Text>
+                    <Text style={styles.subtitle}>Join our community today</Text>
+                </View>
+
+                <View style={styles.form}>
+                    <Controller
+                        control={control}
+                        name="email"
+                        render={({ field: { onChange, onBlur, value } }) => (
+                            <Input
+                                label="Email"
+                                placeholder="Enter your email"
+                                onBlur={onBlur}
+                                onChangeText={onChange}
+                                value={value}
+                                error={errors.email?.message}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                            />
+                        )}
+                    />
+
+                    <Controller
+                        control={control}
+                        name="password"
+                        render={({ field: { onChange, onBlur, value } }) => (
+                            <Input
+                                label="Password"
+                                placeholder="Create a password"
+                                onBlur={onBlur}
+                                onChangeText={onChange}
+                                value={value}
+                                error={errors.password?.message}
+                                secureTextEntry
+                            />
+                        )}
+                    />
+
+                    <Controller
+                        control={control}
+                        name="confirmPassword"
+                        render={({ field: { onChange, onBlur, value } }) => (
+                            <Input
+                                label="Confirm Password"
+                                placeholder="Confirm your password"
+                                onBlur={onBlur}
+                                onChangeText={onChange}
+                                value={value}
+                                error={errors.confirmPassword?.message}
+                                secureTextEntry
+                            />
+                        )}
+                    />
+
+                    <Button
+                        title="Register"
+                        onPress={handleSubmit(onSubmit)}
+                        loading={loading}
+                        style={styles.button}
+                    />
+
+                    <View style={styles.footer}>
+                        <Text style={styles.footerText}>Already have an account? </Text>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <Text style={styles.link}>Login</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: COLORS.background.main,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        padding: SPACING.lg,
+    },
+    header: {
+        marginBottom: SPACING.xl,
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: COLORS.text.primary,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: COLORS.text.secondary,
+        marginTop: SPACING.xs,
+    },
+    form: {
+        width: '100%',
+    },
+    button: {
+        marginTop: SPACING.md,
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: SPACING.lg,
+    },
+    footerText: {
+        color: COLORS.text.secondary,
+    },
+    link: {
+        color: COLORS.primary,
+        fontWeight: 'bold',
+    },
+});
