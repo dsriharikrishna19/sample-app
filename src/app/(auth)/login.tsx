@@ -15,7 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../../store/slices/authSlice';
 import { RootState, AppDispatch } from '../../store/store';
 import { useRouter } from 'expo-router';
-import Input from '../../components/Input';
+import FormInput from '../../components/FormInput';
 import Button from '../../components/Button';
 import { COLORS } from '../../theme/colors';
 import { SPACING } from '../../theme/spacing';
@@ -28,8 +28,7 @@ export default function LoginScreen() {
     const { control, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            email: '',
-            password: '',
+            mobile: '',
         },
     });
 
@@ -42,7 +41,7 @@ export default function LoginScreen() {
         //   // Navigation for demo
         //   router.replace('/(tabs)/home');
         // }
-        router.replace('/(tabs)/home');
+        router.replace('/pages/home');
     };
 
     return (
@@ -57,37 +56,12 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.form}>
-                    <Controller
+                    <FormInput
                         control={control}
-                        name="email"
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Input
-                                label="Email"
-                                placeholder="Enter your email"
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={value}
-                                error={errors.email?.message}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                            />
-                        )}
-                    />
-
-                    <Controller
-                        control={control}
-                        name="password"
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Input
-                                label="Password"
-                                placeholder="Enter your password"
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={value}
-                                error={errors.password?.message}
-                                secureTextEntry
-                            />
-                        )}
+                        name="mobile"
+                        label="Mobile Number"
+                        placeholder="Enter your mobile number"
+                        keyboardType="numeric"
                     />
 
                     {error && <Text style={styles.errorText}>{error}</Text>}

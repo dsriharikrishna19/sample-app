@@ -1,20 +1,44 @@
-export interface User {
+export interface UserProfile {
     id: string;
-    name: string;
+    fullName: string;
+    mobile: string;
+    email?: string;
     age: number;
+    gender: "male" | "female" | "other" | "prefer_not_to_say";
+    height: number;
+    city: string;
+    state: string;
+    country: string;
+
     bio: string;
-    images: string[];
+    zodiacSign:
+    | "Aries"
+    | "Taurus"
+    | "Gemini"
+    | "Cancer"
+    | "Leo"
+    | "Virgo"
+    | "Libra"
+    | "Scorpio"
+    | "Sagittarius"
+    | "Capricorn"
+    | "Aquarius"
+    | "Pisces";
+
+    relationshipType: "Serious" | "Casual" | "Marriage" | "Friendship";
+    datingIntent: "Long-term" | "Short-term";
+
     interests: string[];
-    gender: 'male' | 'female' | 'other';
-    location?: {
-        latitude: number;
-        longitude: number;
-        city: string;
-    };
+    images: string[];
+}
+
+export interface User extends UserProfile {
+    // Basic User for legacy support if needed
 }
 
 export interface AuthState {
     user: User | null;
+    registrationMobile: string | null;
     token: string | null;
     isAuthenticated: boolean;
     loading: boolean;

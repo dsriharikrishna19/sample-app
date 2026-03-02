@@ -1,119 +1,107 @@
 import React from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    TouchableOpacity
+    TouchableOpacity,
+    SafeAreaView,
 } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, RegisterFormData } from '../../schemas/authSchema';
+import { setRegistrationMobile } from '../../store/slices/authSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store/store';
 import { useRouter } from 'expo-router';
-import Input from '../../components/Input';
+import FormInput from '../../components/FormInput';
 import Button from '../../components/Button';
+import AppText from '../../components/AppText';
 import { COLORS } from '../../theme/colors';
-import { SPACING } from '../../theme/spacing';
+import { SPACING, RADIUS } from '../../theme/spacing';
+import { useResponsive } from '../../hooks/useResponsive';
+import { Phone } from 'lucide-react-native';
 
 export default function RegisterScreen() {
     const router = useRouter();
-    const { loading, error } = useSelector((state: RootState) => state.auth);
+    const dispatch = useDispatch<AppDispatch>();
+    const { loading } = useSelector((state: RootState) => state.auth);
+    const { isTablet, scale } = useResponsive();
 
-    const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
+    const { control, handleSubmit } = useForm<RegisterFormData>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
-            email: '',
-            password: '',
-            confirmPassword: '',
+            mobile: '',
         },
     });
 
     const onSubmit = async (data: RegisterFormData) => {
-        // For demo purposes, we'll just navigate
-        router.replace('/(tabs)/home');
+        dispatch(setRegistrationMobile(data.mobile));
+        router.push('/(auth)/onboarding');
     };
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.container}
-        >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <Text style={styles.title}>Create Account</Text>
-                    <Text style={styles.subtitle}>Join our community today</Text>
-                </View>
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.flex}
+            >
+                <ScrollView
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        isTablet && styles.tabletScrollContent
+                    ]}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <View style={[styles.content, isTablet && styles.tabletContent]}>
+                        <View style={styles.header}>
+                            <AppText variant="h1" align="center" style={styles.title}>
+                                Get Started
+                            </AppText>
+                            <AppText variant="body" align="center" style={styles.subtitle}>
+                                Enter your mobile number to continue
+                            </AppText>
+                        </View>
 
-                <View style={styles.form}>
-                    <Controller
-                        control={control}
-                        name="email"
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Input
-                                label="Email"
-                                placeholder="Enter your email"
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={value}
-                                error={errors.email?.message}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
+                        <View style={styles.form}>
+                            <FormInput
+                                control={control}
+                                name="mobile"
+                                label="Mobile Number"
+                                placeholder="9876543210"
+                                keyboardType="numeric"
+                                leftIcon={<Phone size={20} color={COLORS.text.tertiary} />}
+                                maxLength={10}
                             />
-                        )}
-                    />
 
-                    <Controller
-                        control={control}
-                        name="password"
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Input
-                                label="Password"
-                                placeholder="Create a password"
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={value}
-                                error={errors.password?.message}
-                                secureTextEntry
+                            <Button
+                                title="Continue"
+                                onPress={handleSubmit(onSubmit)}
+                                loading={loading}
+                                style={styles.button}
+                                size="lg"
                             />
-                        )}
-                    />
 
-                    <Controller
-                        control={control}
-                        name="confirmPassword"
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Input
-                                label="Confirm Password"
-                                placeholder="Confirm your password"
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={value}
-                                error={errors.confirmPassword?.message}
-                                secureTextEntry
-                            />
-                        )}
-                    />
+                            <View style={styles.footer}>
+                                <AppText variant="body" color={COLORS.text.secondary}>
+                                    Already have an account?{' '}
+                                </AppText>
+                                <TouchableOpacity onPress={() => router.back()}>
+                                    <AppText variant="link">Login</AppText>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
 
-                    <Button
-                        title="Register"
-                        onPress={handleSubmit(onSubmit)}
-                        loading={loading}
-                        style={styles.button}
-                    />
-
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>Already have an account? </Text>
-                        <TouchableOpacity onPress={() => router.back()}>
-                            <Text style={styles.link}>Login</Text>
-                        </TouchableOpacity>
+                        <View style={styles.termsContainer}>
+                            <AppText variant="caption" align="center" style={styles.termsText}>
+                                By continuing, you agree to our Terms of Service and Privacy Policy.
+                            </AppText>
+                        </View>
                     </View>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
@@ -122,24 +110,40 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background.main,
     },
+    flex: {
+        flex: 1,
+    },
     scrollContent: {
         flexGrow: 1,
         justifyContent: 'center',
         padding: SPACING.lg,
     },
-    header: {
-        marginBottom: SPACING.xl,
+    tabletScrollContent: {
         alignItems: 'center',
     },
+    content: {
+        width: '100%',
+        maxWidth: 400, // For larger screens
+    },
+    tabletContent: {
+        width: 450,
+        backgroundColor: COLORS.background.card,
+        padding: SPACING.xl,
+        borderRadius: RADIUS.xl,
+        elevation: 4,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+    },
+    header: {
+        marginBottom: SPACING.xxl,
+    },
     title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: COLORS.text.primary,
+        marginBottom: SPACING.xs,
     },
     subtitle: {
-        fontSize: 16,
         color: COLORS.text.secondary,
-        marginTop: SPACING.xs,
     },
     form: {
         width: '100%',
@@ -150,13 +154,13 @@ const styles = StyleSheet.create({
     footer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: SPACING.lg,
+        marginTop: SPACING.xl,
     },
-    footerText: {
-        color: COLORS.text.secondary,
+    termsContainer: {
+        marginTop: SPACING.xxl,
     },
-    link: {
-        color: COLORS.primary,
-        fontWeight: 'bold',
+    termsText: {
+        color: COLORS.text.tertiary,
+        lineHeight: 18,
     },
 });

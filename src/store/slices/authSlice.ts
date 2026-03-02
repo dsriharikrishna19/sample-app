@@ -8,6 +8,7 @@ const initialState: AuthState = {
     user: null,
     token: null,
     isAuthenticated: false,
+    registrationMobile: null,
     loading: false,
     error: null,
 };
@@ -42,12 +43,16 @@ const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
+        setRegistrationMobile: (state, action: PayloadAction<string>) => {
+            state.registrationMobile = action.payload;
+        },
         setUser: (state, action: PayloadAction<User | null>) => {
             state.user = action.payload;
             state.isAuthenticated = !!action.payload;
         },
         logout: (state) => {
             state.user = null;
+            state.registrationMobile = null;
             state.token = null;
             state.isAuthenticated = false;
             state.error = null;
@@ -87,5 +92,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { setUser, logout } = authSlice.actions;
+export const { setRegistrationMobile, setUser, logout } = authSlice.actions;
 export default authSlice.reducer;
