@@ -100,6 +100,27 @@ export default function TabLayout() {
                     href: null,
                 }}
             />
+            {/* Hide settings sub-pages from tab bar */}
+            <Tabs.Screen
+                name="pages/settings/notifications"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="pages/settings/language"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="pages/settings/premium"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="pages/settings/privacy"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="pages/settings/help"
+                options={{ href: null }}
+            />
         </Tabs>
     );
 }

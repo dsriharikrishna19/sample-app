@@ -14,8 +14,9 @@ import { MOCK_USERS } from '../../../utils/mockData';
 import { COLORS } from '../../../theme/colors';
 import { SPACING, RADIUS } from '../../../theme/spacing';
 import { TYPOGRAPHY } from '../../../theme/typography';
-import { Search, X, Plus } from 'lucide-react-native';
+import { Search, X } from 'lucide-react-native';
 import AppText from '../../../components/AppText';
+import Avatar from '../../../components/Avatar';
 import { useResponsive } from '../../../hooks/useResponsive';
 import { useRouter } from 'expo-router';
 
@@ -28,8 +29,12 @@ const NewMatchItem = ({ item }: { item: typeof MOCK_USERS[0] }) => {
             onPress={() => router.push(`/chat/${item.id}`)}
         >
             <View style={styles.newMatchAvatarContainer}>
-                <Image source={{ uri: item.images[0] }} style={styles.newMatchAvatar} />
-                <View style={styles.onlineStatus} />
+                <Avatar
+                    uri={item.images[0]}
+                    size={64}
+                    showOnline={true}
+                    imageStyle={{ borderWidth: 2, borderColor: COLORS.primary }}
+                />
             </View>
             <AppText variant="tiny" style={styles.newMatchName} numberOfLines={1}>
                 {item.fullName.split(' ')[0]}
@@ -60,8 +65,11 @@ const MessageItem = React.memo(({ item, index }: { item: typeof MOCK_USERS[0], i
                 onPress={() => router.push(`/chat/${item.id}`)}
             >
                 <View style={styles.avatarContainer}>
-                    <Image source={{ uri: item.images[0] }} style={styles.avatar} />
-                    <View style={styles.activeDot} />
+                    <Avatar
+                        uri={item.images[0]}
+                        size={60}
+                        showOnline={isUnread} // Example logic: online if unread 
+                    />
                 </View>
                 <View style={styles.messageContent}>
                     <View style={styles.messageHeader}>
@@ -251,24 +259,6 @@ const styles = StyleSheet.create({
         position: 'relative',
         marginBottom: SPACING.xs,
     },
-    newMatchAvatar: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        borderWidth: 2,
-        borderColor: COLORS.primary,
-    },
-    onlineStatus: {
-        position: 'absolute',
-        bottom: 2,
-        right: 2,
-        width: 14,
-        height: 14,
-        borderRadius: 7,
-        backgroundColor: '#4CAF50',
-        borderWidth: 2,
-        borderColor: COLORS.background.main,
-    },
     newMatchName: {
         fontWeight: TYPOGRAPHY.weight.semibold,
         marginTop: 4,
@@ -281,12 +271,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.lg,
         paddingVertical: SPACING.md,
         alignItems: 'center',
-    },
-    avatar: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        marginRight: SPACING.md,
     },
     messageContent: {
         flex: 1,

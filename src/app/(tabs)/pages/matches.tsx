@@ -14,15 +14,20 @@ import { MOCK_USERS } from '../../../utils/mockData';
 import { COLORS } from '../../../theme/colors';
 import { SPACING, RADIUS } from '../../../theme/spacing';
 import { TYPOGRAPHY } from '../../../theme/typography';
-import { Search, ChevronRight, MessageSquare } from 'lucide-react-native';
+import { Search, MessageSquare } from 'lucide-react-native';
 import AppText from '../../../components/AppText';
+import Avatar from '../../../components/Avatar';
 import { useResponsive } from '../../../hooks/useResponsive';
 
 const NewMatchItem = ({ item }: { item: typeof MOCK_USERS[0] }) => (
     <TouchableOpacity style={styles.newMatchItem} activeOpacity={0.8}>
         <View style={styles.newMatchAvatarContainer}>
-            <Image source={{ uri: item.images[0] }} style={styles.newMatchAvatar} />
-            <View style={styles.onlineStatus} />
+            <Avatar
+                uri={item.images[0]}
+                size={72}
+                showOnline={true}
+                imageStyle={{ borderWidth: 2, borderColor: COLORS.primary }}
+            />
         </View>
         <AppText variant="caption" style={styles.newMatchName} numberOfLines={1}>
             {item.fullName.split(' ')[0]}
@@ -32,7 +37,13 @@ const NewMatchItem = ({ item }: { item: typeof MOCK_USERS[0] }) => (
 
 const MessageItem = React.memo(({ item }: { item: typeof MOCK_USERS[0] }) => (
     <TouchableOpacity style={styles.messageItem} activeOpacity={0.6}>
-        <Image source={{ uri: item.images[0] }} style={styles.avatar} />
+        <View style={styles.avatarContainer}>
+            <Avatar
+                uri={item.images[0]}
+                size={64}
+                showOnline={false} // Add logic if needed
+            />
+        </View>
         <View style={styles.messageContent}>
             <View style={styles.messageHeader}>
                 <AppText variant="body" style={styles.name}>{item.fullName}</AppText>
@@ -174,24 +185,6 @@ const styles = StyleSheet.create({
         position: 'relative',
         marginBottom: SPACING.xs,
     },
-    newMatchAvatar: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        borderWidth: 2,
-        borderColor: COLORS.primary,
-    },
-    onlineStatus: {
-        position: 'absolute',
-        bottom: 2,
-        right: 2,
-        width: 14,
-        height: 14,
-        borderRadius: 7,
-        backgroundColor: '#4CAF50',
-        borderWidth: 2,
-        borderColor: COLORS.background.main,
-    },
     newMatchName: {
         fontWeight: TYPOGRAPHY.weight.semibold,
         fontSize: 11,
@@ -205,10 +198,8 @@ const styles = StyleSheet.create({
         paddingVertical: SPACING.md,
         alignItems: 'center',
     },
-    avatar: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+    avatarContainer: {
+        position: 'relative',
         marginRight: SPACING.md,
     },
     messageContent: {

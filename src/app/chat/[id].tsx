@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
     View,
     StyleSheet,
@@ -8,9 +8,6 @@ import {
     SafeAreaView,
     KeyboardAvoidingView,
     Platform,
-    Image,
-    Keyboard,
-    Dimensions,
     Alert,
     Linking
 } from 'react-native';
@@ -19,6 +16,7 @@ import { ChevronLeft, Send, MoreVertical, Phone } from 'lucide-react-native';
 import { COLORS } from '../../theme/colors';
 import { SPACING, RADIUS } from '../../theme/spacing';
 import AppText from '../../components/AppText';
+import Avatar from '../../components/Avatar';
 import { MOCK_USERS } from '../../utils/mockData';
 import PopoverMenu, { PopoverOption } from '../../components/PopoverMenu';
 
@@ -120,7 +118,12 @@ export default function ChatDetailScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.userInfo} activeOpacity={0.7}>
-                    <Image source={{ uri: user.images[0] }} style={styles.headerAvatar} />
+                    <Avatar
+                        uri={user.images[0]}
+                        size={40}
+                        showOnline={true}
+                        style={{ marginRight: SPACING.sm }}
+                    />
                     <View style={styles.headerText}>
                         <AppText variant="bodyBold" numberOfLines={1}>{user.fullName}</AppText>
                         <AppText variant="tiny" color={COLORS.primary}>Online</AppText>
@@ -210,12 +213,6 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-    },
-    headerAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: SPACING.sm,
     },
     headerText: {
         flex: 1,

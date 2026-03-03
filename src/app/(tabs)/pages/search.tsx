@@ -29,6 +29,7 @@ import { SPACING, RADIUS } from '../../../theme/spacing';
 import { TYPOGRAPHY } from '../../../theme/typography';
 import { useResponsive } from '../../../hooks/useResponsive';
 import { MOCK_USERS } from '../../../utils/mockData';
+import Avatar from '../../../components/Avatar';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -108,12 +109,17 @@ export default function SearchScreen() {
                         {filteredResults.length > 0 ? (
                             filteredResults.map((user) => (
                                 <TouchableOpacity key={user.id} style={styles.userCard}>
-                                    <Image source={{ uri: user.images[0] }} style={styles.userImage} />
+                                    <Avatar
+                                        uri={user.images[0]}
+                                        size={width * 0.4}
+                                        showOnline={true}
+                                        imageStyle={{ borderRadius: RADIUS.xl }}
+                                        style={styles.userImageContainer}
+                                    />
                                     <View style={styles.cardGradient} />
                                     <View style={styles.userOverlay}>
                                         <View style={styles.nameRow}>
                                             <AppText variant="small" color={COLORS.text.light} weight="bold">{user.fullName}, {user.age}</AppText>
-                                            <View style={styles.onlineDot} />
                                         </View>
                                         <View style={styles.locationRow}>
                                             <MapPin size={10} color={COLORS.text.light} />
@@ -315,7 +321,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         backgroundColor: COLORS.background.surface,
     },
-    userImage: {
+    userImageContainer: {
         width: '100%',
         height: '100%',
     },
@@ -338,12 +344,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-    },
-    onlineDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#4ade80', // green-400
     },
     locationRow: {
         flexDirection: 'row',

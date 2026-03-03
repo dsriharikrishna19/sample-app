@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     StyleSheet,
@@ -6,26 +6,26 @@ import {
     ScrollView,
     SafeAreaView,
     TouchableOpacity,
-    Platform
+    Platform,
+    Modal,
+    TextInput,
+    KeyboardAvoidingView,
+    Alert
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { MOCK_USERS } from '../../../utils/mockData';
 import { COLORS } from '../../../theme/colors';
 import { SPACING, RADIUS } from '../../../theme/spacing';
 import { TYPOGRAPHY } from '../../../theme/typography';
 import {
-    Edit2,
-    ChevronRight,
-    User,
-    Bell,
-    ShieldCheck,
-    HelpCircle,
-    CreditCard
+    Edit2, X
 } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../../store/slices/authSlice';
+import { logout, updateProfile } from '../../../store/slices/authSlice';
 import { useRouter } from 'expo-router';
 import Button from '../../../components/Button';
 import AppText from '../../../components/AppText';
+import Avatar from '../../../components/Avatar';
 import { useResponsive } from '../../../hooks/useResponsive';
 import { RootState } from '../../../store/store';
 
@@ -39,9 +39,64 @@ export default function ProfileScreen() {
     // Fallback to MOCK_USERS[0] if no auth user
     const user = authUser || MOCK_USERS[0];
 
+    // Edit Profile Modal State
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [editForm, setEditForm] = useState({
+        fullName: user.fullName || '',
+        age: user.age ? user.age.toString() : '',
+        bio: user.bio || '',
+        city: user.city || '',
+        state: user.state || ''
+    });
+
     const handleLogout = () => {
         dispatch(logout());
         router.replace('/(auth)/login');
+    };
+
+    const handleEditAvatar = async () => {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (permissionResult.granted === false) {
+            Alert.alert("Permission Required", "You need to grant camera roll permissions to change your avatar.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            const newImageUri = result.assets[0].uri;
+
+            // If the user object has an images array, update the first one
+            // otherwise set a profileImage property
+            let updatedData: any = {};
+            if (user.images && user.images.length > 0) {
+                const newImages = [...user.images];
+                newImages[0] = newImageUri;
+                updatedData.images = newImages;
+            } else {
+                updatedData.profileImage = newImageUri;
+            }
+
+            dispatch(updateProfile(updatedData));
+        }
+    };
+
+    const handleSaveProfile = () => {
+        const updatedData = {
+            fullName: editForm.fullName,
+            age: parseInt(editForm.age) || user.age,
+            bio: editForm.bio,
+            city: editForm.city,
+            state: editForm.state
+        };
+        dispatch(updateProfile(updatedData));
+        setIsEditModalVisible(false);
     };
 
     return (
@@ -60,17 +115,18 @@ export default function ProfileScreen() {
                 <View style={[styles.contentContainer, isTablet && styles.tabletContent]}>
                     <View style={styles.profileCard}>
                         <View style={styles.imageContainer}>
-                            <Image
-                                source={{ uri: user.images ? user.images[0] : (user as any).profileImage }}
-                                style={styles.profileImage}
+                            <Avatar
+                                uri={user.images ? user.images[0] : (user as any).profileImage}
+                                size={130}
+                                imageStyle={{ borderWidth: 4, borderColor: COLORS.background.main }}
                             />
-                            <TouchableOpacity style={styles.editBadge}>
+                            <TouchableOpacity style={styles.editBadge} onPress={handleEditAvatar}>
                                 <Edit2 color={COLORS.text.light} size={16} />
                             </TouchableOpacity>
                         </View>
                         <AppText variant="h2" style={styles.name}>{user.fullName}, {user.age}</AppText>
                         <AppText variant="body" color={COLORS.text.secondary} style={styles.location}>
-                            Hyderabad, Telangana
+                            {user.city}, {user.state}
                         </AppText>
                     </View>
 
@@ -94,16 +150,24 @@ export default function ProfileScreen() {
                     <View style={styles.settingsSection}>
                         <Button
                             title="Edit Profile"
-                            onPress={() => { }}
+                            onPress={() => setIsEditModalVisible(true)}
                             variant="outline"
                             style={styles.editButton}
                         />
                         <View style={styles.infoCard}>
-                            <AppText variant="bodyBold">Match Preferences</AppText>
+                            <AppText variant="bodyBold">About Me</AppText>
                             <AppText variant="small" color={COLORS.text.secondary} style={{ marginTop: 4 }}>
-                                Show me: Women · 18-30 · 50km
+                                {user.bio || "No bio added yet."}
                             </AppText>
                         </View>
+                        {(user as any).datingIntent && (
+                            <View style={[styles.infoCard, { marginTop: SPACING.md }]}>
+                                <AppText variant="bodyBold">Match Preferences</AppText>
+                                <AppText variant="small" color={COLORS.text.secondary} style={{ marginTop: 4 }}>
+                                    Looking for: {(user as any).datingIntent}
+                                </AppText>
+                            </View>
+                        )}
                     </View>
 
                     <AppText variant="tiny" align="center" color={COLORS.text.tertiary} style={styles.versionText}>
@@ -111,6 +175,87 @@ export default function ProfileScreen() {
                     </AppText>
                 </View>
             </ScrollView>
+
+            {/* Edit Profile Modal */}
+            <Modal
+                visible={isEditModalVisible}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => setIsEditModalVisible(false)}
+            >
+                <KeyboardAvoidingView
+                    style={styles.modalContainer}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                >
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity onPress={() => setIsEditModalVisible(false)} style={styles.modalCloseButton}>
+                            <X color={COLORS.text.primary} size={24} />
+                        </TouchableOpacity>
+                        <AppText variant="h3" style={styles.modalTitle}>Edit Profile</AppText>
+                        <TouchableOpacity onPress={handleSaveProfile} style={styles.modalSaveButton}>
+                            <AppText variant="bodyBold" color={COLORS.primary}>Save</AppText>
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+                        <View style={styles.formGroup}>
+                            <AppText variant="small" color={COLORS.text.secondary} style={styles.label}>Full Name</AppText>
+                            <TextInput
+                                style={styles.input}
+                                value={editForm.fullName}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, fullName: text }))}
+                                placeholderTextColor={COLORS.text.tertiary}
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <AppText variant="small" color={COLORS.text.secondary} style={styles.label}>Age</AppText>
+                            <TextInput
+                                style={styles.input}
+                                value={editForm.age}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, age: text }))}
+                                keyboardType="numeric"
+                                placeholderTextColor={COLORS.text.tertiary}
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <AppText variant="small" color={COLORS.text.secondary} style={styles.label}>City</AppText>
+                            <TextInput
+                                style={styles.input}
+                                value={editForm.city}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, city: text }))}
+                                placeholderTextColor={COLORS.text.tertiary}
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <AppText variant="small" color={COLORS.text.secondary} style={styles.label}>State/Region</AppText>
+                            <TextInput
+                                style={styles.input}
+                                value={editForm.state}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, state: text }))}
+                                placeholderTextColor={COLORS.text.tertiary}
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <AppText variant="small" color={COLORS.text.secondary} style={styles.label}>Bio</AppText>
+                            <TextInput
+                                style={[styles.input, styles.textArea]}
+                                value={editForm.bio}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, bio: text }))}
+                                multiline
+                                numberOfLines={4}
+                                placeholder="Write a short summary about yourself..."
+                                placeholderTextColor={COLORS.text.tertiary}
+                            />
+                        </View>
+
+                        <View style={{ height: 40 }} />
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -170,13 +315,7 @@ const styles = StyleSheet.create({
             }
         })
     },
-    profileImage: {
-        width: 130,
-        height: 130,
-        borderRadius: 65,
-        borderWidth: 4,
-        borderColor: COLORS.background.main,
-    },
+    // Profile Image is now handled by Avatar component size prop
     editBadge: {
         position: 'absolute',
         bottom: 5,
@@ -239,5 +378,55 @@ const styles = StyleSheet.create({
     versionText: {
         marginBottom: SPACING.xl,
         letterSpacing: 0.5,
+    },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: COLORS.background.main,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: Platform.OS === 'ios' ? SPACING.lg : SPACING.md,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.divider,
+        backgroundColor: COLORS.background.card,
+    },
+    modalCloseButton: {
+        padding: SPACING.xs,
+    },
+    modalTitle: {
+        fontWeight: TYPOGRAPHY.weight.bold,
+    },
+    modalSaveButton: {
+        padding: SPACING.xs,
+    },
+    modalBody: {
+        flex: 1,
+        padding: SPACING.lg,
+    },
+    formGroup: {
+        marginBottom: SPACING.lg,
+    },
+    label: {
+        marginBottom: SPACING.xs,
+        marginLeft: SPACING.xs,
+        fontWeight: TYPOGRAPHY.weight.medium,
+    },
+    input: {
+        backgroundColor: COLORS.background.surface,
+        borderWidth: 1,
+        borderColor: COLORS.divider,
+        borderRadius: RADIUS.md,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: Platform.OS === 'ios' ? 14 : 10,
+        fontSize: 16,
+        color: COLORS.text.primary,
+    },
+    textArea: {
+        minHeight: 100,
+        textAlignVertical: 'top',
+        paddingTop: Platform.OS === 'ios' ? 14 : 10,
     }
 });
