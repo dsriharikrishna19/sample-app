@@ -1,69 +1,73 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { matchService } from '../../services/matchService';
-import { User, Match } from '../../types/user';
+import { User } from '../../types/user';
 
 interface MatchState {
     potentialMatches: User[];
-    matches: Match[];
-    loading: boolean;
+    matches: User[];
+    swipedIds: string[];
+    status: 'idle' | 'loading' | 'succeeded' | 'failed';
     error: string | null;
 }
 
 const initialState: MatchState = {
     potentialMatches: [],
     matches: [],
-    loading: false,
+    swipedIds: [],
+    status: 'idle',
     error: null,
 };
 
-export const fetchMatches = createAsyncThunk(
-    'match/fetchMatches',
-    async (_, { rejectWithValue }) => {
-        try {
-            return await matchService.getMatches();
-        } catch (error: any) {
-            return rejectWithValue(error.response?.data?.message || 'Failed to fetch matches');
-        }
+export const fetchPotentialMatches = createAsyncThunk(
+    'match/fetchPotentialMatches',
+    async (_, { getState }) => {
+        const state = getState() as any;
+        const swipedIds = state.match.swipedIds;
+        const response = await matchService.fetchPotentialMatches(swipedIds);
+        return response;
     }
 );
 
-export const swipeUser = createAsyncThunk(
-    'match/swipe',
-    async ({ userId, direction }: { userId: string; direction: 'like' | 'dislike' }, { rejectWithValue }) => {
-        try {
-            return await matchService.swipe(userId, direction);
-        } catch (error: any) {
-            return rejectWithValue(error.response?.data?.message || 'Failed to swipe');
-        }
+export const swipeOnUser = createAsyncThunk(
+    'match/swipeOnUser',
+    async ({ userId, direction }: { userId: string, direction: 'LEFT' | 'RIGHT' }) => {
+        const response = await matchService.swipeUser(userId, direction);
+        return { userId, direction, ...response };
     }
 );
 
 const matchSlice = createSlice({
     name: 'match',
     initialState,
-    reducers: {
-        removePotentialMatch: (state, action: PayloadAction<string>) => {
-            state.potentialMatches = state.potentialMatches.filter(u => u.id !== action.payload);
-        },
-    },
+    reducers: {},
     extraReducers: (builder) => {
-        builder
-            .addCase(fetchMatches.pending, (state) => {
-                state.loading = true;
-            })
-            .addCase(fetchMatches.fulfilled, (state, action) => {
-                state.loading = false;
-                state.matches = action.payload;
-            })
-            .addCase(fetchMatches.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            })
-            .addCase(swipeUser.fulfilled, (state, action) => {
-                // Handle match logic if response indicates a match
-            });
+        // Fetch Matches
+        builder.addCase(fetchPotentialMatches.pending, (state) => {
+            state.status = 'loading';
+        });
+        builder.addCase(fetchPotentialMatches.fulfilled, (state, action) => {
+            state.status = 'succeeded';
+            state.potentialMatches = action.payload;
+        });
+        builder.addCase(fetchPotentialMatches.rejected, (state, action) => {
+            state.status = 'failed';
+            state.error = action.error.message || 'Failed to fetch matches';
+        });
+
+        // Swipe Action
+        builder.addCase(swipeOnUser.fulfilled, (state, action) => {
+            // Add to swiped history
+            state.swipedIds.push(action.payload.userId);
+
+            // Remove from potential viewing pile
+            state.potentialMatches = state.potentialMatches.filter(u => u.id !== action.payload.userId);
+
+            // If it was a successful match, append to match list!
+            if (action.payload.matched && action.payload.user) {
+                state.matches.push(action.payload.user);
+            }
+        });
     },
 });
 
-export const { removePotentialMatch } = matchSlice.actions;
 export default matchSlice.reducer;

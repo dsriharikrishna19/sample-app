@@ -7,13 +7,17 @@ import {
     KeyboardAvoidingView,
     Platform,
     TouchableOpacity,
-    Dimensions
+    Dimensions,
+    Image,
+    Alert
 } from 'react-native';
-import { useForm } from 'react-hook-form';
+import * as ImagePicker from 'expo-image-picker';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { onboardingSchema, OnboardingFormData } from '../../schemas/onboardingSchema';
 import { useRouter } from 'expo-router';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setOnboardingData } from '../../store/slices/authSlice';
 import { RootState } from '../../store/store';
 import FormInput from '../../components/FormInput';
 import FormSelect from '../../components/FormSelect';
@@ -30,11 +34,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function OnboardingScreen() {
     const router = useRouter();
+    const dispatch = useDispatch();
     const registrationMobile = useSelector((state: RootState) => state.auth.registrationMobile);
     const [step, setStep] = useState(1);
     const { isTablet, scale } = useResponsive();
 
-    const { control, handleSubmit, formState: { errors } } = useForm<OnboardingFormData>({
+    const { control, handleSubmit, formState: { errors }, setValue, trigger, getValues } = useForm<OnboardingFormData>({
         resolver: zodResolver(onboardingSchema),
         defaultValues: {
             fullName: '',
@@ -50,21 +55,78 @@ export default function OnboardingScreen() {
             relationshipType: 'Serious',
             datingIntent: 'Long-term',
             interests: ['Travel'],
-            images: [
-                'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800',
-                'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800',
-                'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800',
-                'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800'
-            ]
+            images: ['', '', '', '']
         }
     });
 
+    const watchedImages = useWatch({
+        control,
+        name: 'images',
+    });
+
+    const pickImage = async (index: number) => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Denied', 'We need camera roll permissions to upload photos.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            const newImages = [...watchedImages];
+            newImages[index] = result.assets[0].uri;
+            setValue('images', newImages as [string, string, string, string], { shouldValidate: true });
+        }
+    };
+
     const onSubmit = (data: OnboardingFormData) => {
-        console.log('Onboarding Data:', data);
+        // Save all onboarding data to Redux (and persisted storage)
+        dispatch(setOnboardingData(data) as any);
         router.replace('/pages/home');
     };
 
-    const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
+    const onError = (errors: any) => {
+        const errorMessages = Object.entries(errors)
+            .map(([field, err]: any) => `• ${field}: ${err?.message || 'Invalid'}`)
+            .join('\n');
+        Alert.alert('Please fix the following errors', errorMessages);
+        console.log('Form errors:', JSON.stringify(errors, null, 2));
+    };
+
+    const nextStep = async () => {
+        let fieldsToValidate: any[] = [];
+
+        if (step === 1) {
+            fieldsToValidate = ['fullName', 'mobile', 'age', 'height', 'gender'];
+        } else if (step === 2) {
+            fieldsToValidate = ['bio', 'zodiacSign', 'relationshipType'];
+        } else if (step === 3) {
+            fieldsToValidate = ['datingIntent', 'email', 'city', 'state', 'country'];
+        } else if (step === 4) {
+            // Validate all 4 images are selected
+            const allImagesSelected = watchedImages.every(img => img && img.length > 0);
+            if (!allImagesSelected) {
+                Alert.alert('Photos Required', 'Please upload all 4 photos to complete your profile.');
+                return;
+            }
+            // All steps have been validated progressively — submit directly
+            const currentValues = getValues();
+            onSubmit({ ...currentValues, images: watchedImages });
+            return;
+        }
+
+        const isValid = await trigger(fieldsToValidate);
+        if (isValid) {
+            setStep(prev => Math.min(prev + 1, 4));
+        }
+    };
+
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
     const renderStepContent = () => {
@@ -75,15 +137,15 @@ export default function OnboardingScreen() {
                         <AppText variant="h1" style={styles.sectionTitle}>The Basics</AppText>
                         <AppText variant="body" style={styles.sectionSubtitle}>Tell us the basics to get started.</AppText>
 
-                        <FormInput control={control} name="fullName" label="Full Name" placeholder="Rahul Sharma" />
-                        <FormInput control={control} name="mobile" label="Mobile Number" placeholder="9876543210" keyboardType="numeric" maxLength={10} />
+                        <FormInput control={control} name="fullName" label="Full Name" placeholder="Rahul Sharma" required={true} />
+                        <FormInput control={control} name="mobile" label="Mobile Number" placeholder="9876543210" keyboardType="numeric" maxLength={10} required={true} />
 
                         <View style={styles.row}>
                             <View style={styles.half}>
-                                <FormInput control={control} name="age" label="Age" keyboardType="numeric" isNumber maxLength={2} />
+                                <FormInput control={control} name="age" label="Age" keyboardType="numeric" isNumber maxLength={2} required={true} />
                             </View>
                             <View style={styles.half}>
-                                <FormInput control={control} name="height" label="Height (cm)" keyboardType="numeric" isNumber maxLength={3} />
+                                <FormInput control={control} name="height" label="Height (cm)" keyboardType="numeric" isNumber maxLength={3} required={true} />
                             </View>
                         </View>
 
@@ -91,6 +153,7 @@ export default function OnboardingScreen() {
                             control={control}
                             name="gender"
                             label="Gender Identity"
+                            required={true}
                             options={["male", "female", "other", "prefer_not_to_say"]}
                         />
                     </View>
@@ -108,12 +171,14 @@ export default function OnboardingScreen() {
                             placeholder="Tell us something interesting..."
                             multiline
                             numberOfLines={4}
+                            required={true}
                         />
 
                         <FormSelect
                             control={control}
                             name="zodiacSign"
                             label="Zodiac Sign"
+                            required={true}
                             options={[
                                 "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
                                 "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
@@ -124,6 +189,7 @@ export default function OnboardingScreen() {
                             control={control}
                             name="relationshipType"
                             label="What are you looking for?"
+                            required={true}
                             options={[
                                 { label: 'Serious ❤️', value: 'Serious' },
                                 { label: 'Casual 😎', value: 'Casual' },
@@ -144,6 +210,7 @@ export default function OnboardingScreen() {
                             name="datingIntent"
                             label="Dating Intent"
                             type="card"
+                            required={true}
                             options={[
                                 { label: 'Long-term', value: 'Long-term', icon: '💖' },
                                 { label: 'Short-term', value: 'Short-term', icon: '🔥' }
@@ -154,13 +221,13 @@ export default function OnboardingScreen() {
 
                         <View style={styles.locationContainer}>
                             <AppText variant="caption" style={styles.locationLabel}>Location</AppText>
-                            <FormInput control={control} name="city" label="City" placeholder="City (e.g. Hyderabad)" />
+                            <FormInput control={control} name="city" label="City" placeholder="City (e.g. Hyderabad)" required={true} />
                             <View style={styles.row}>
                                 <View style={styles.half}>
-                                    <FormInput control={control} name="state" label="State" placeholder="State" />
+                                    <FormInput control={control} name="state" label="State" placeholder="State" required={true} />
                                 </View>
                                 <View style={styles.half}>
-                                    <FormInput control={control} name="country" label="Country" placeholder="Country" />
+                                    <FormInput control={control} name="country" label="Country" placeholder="Country" required={true} />
                                 </View>
                             </View>
                         </View>
@@ -174,13 +241,24 @@ export default function OnboardingScreen() {
 
                         <View style={styles.imageGrid}>
                             {[0, 1, 2, 3].map((idx) => (
-                                <TouchableOpacity key={idx} style={styles.imagePlaceholder} activeOpacity={0.7}>
-                                    <View style={styles.imageIconCircle}>
-                                        <Camera color={COLORS.primary} size={24} />
-                                    </View>
-                                    <AppText variant="caption" color={COLORS.text.tertiary} style={styles.imageLabel}>
-                                        PHOTO {idx + 1}
-                                    </AppText>
+                                <TouchableOpacity
+                                    key={idx}
+                                    style={styles.imagePlaceholder}
+                                    activeOpacity={0.7}
+                                    onPress={() => pickImage(idx)}
+                                >
+                                    {watchedImages[idx] ? (
+                                        <Image source={{ uri: watchedImages[idx] }} style={styles.selectedImage} />
+                                    ) : (
+                                        <>
+                                            <View style={styles.imageIconCircle}>
+                                                <Camera color={COLORS.primary} size={24} />
+                                            </View>
+                                            <AppText variant="caption" color={COLORS.text.tertiary} style={styles.imageLabel}>
+                                                PHOTO {idx + 1}
+                                            </AppText>
+                                        </>
+                                    )}
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -231,7 +309,7 @@ export default function OnboardingScreen() {
                 <View style={[styles.footer, isTablet && styles.tabletFooter]}>
                     <Button
                         title={step === 4 ? "Complete Profile" : "Continue"}
-                        onPress={step === 4 ? handleSubmit(onSubmit) : nextStep}
+                        onPress={nextStep}
                         size="lg"
                         rightIcon={step < 4 ? <ChevronRight color={COLORS.text.light} size={20} /> : undefined}
                     />
@@ -369,6 +447,11 @@ const styles = StyleSheet.create({
     imageLabel: {
         fontWeight: 'bold',
         letterSpacing: 0.5,
+    },
+    selectedImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: RADIUS.lg,
     },
     infoBox: {
         backgroundColor: COLORS.primaryAlpha(0.08),

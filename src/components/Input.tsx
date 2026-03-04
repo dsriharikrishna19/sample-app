@@ -14,6 +14,7 @@ import AppText from './AppText';
 
 interface InputProps extends TextInputProps {
     label?: string;
+    required?: boolean;
     error?: string;
     containerStyle?: ViewStyle;
     leftIcon?: React.ReactNode;
@@ -22,6 +23,7 @@ interface InputProps extends TextInputProps {
 
 const Input: React.FC<InputProps> = ({
     label,
+    required,
     error,
     containerStyle,
     leftIcon,
@@ -46,7 +48,7 @@ const Input: React.FC<InputProps> = ({
         <View style={[styles.container, containerStyle]}>
             {label && (
                 <AppText variant="caption" style={styles.label}>
-                    {label}
+                    {label}{required && <AppText color={COLORS.error}> *</AppText>}
                 </AppText>
             )}
             <View

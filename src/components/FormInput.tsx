@@ -7,6 +7,7 @@ interface FormInputProps<T extends FieldValues> extends Omit<TextInputProps, 'va
     control: Control<T>;
     name: Path<T>;
     label: string;
+    required?: boolean;
     placeholder?: string;
     isNumber?: boolean;
     leftIcon?: React.ReactNode;
@@ -17,6 +18,7 @@ const FormInput = <T extends FieldValues>({
     control,
     name,
     label,
+    required,
     isNumber,
     ...props
 }: FormInputProps<T>) => {
@@ -27,6 +29,7 @@ const FormInput = <T extends FieldValues>({
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                 <Input
                     label={label}
+                    required={required}
                     onBlur={onBlur}
                     onChangeText={(val) => {
                         if (isNumber) {

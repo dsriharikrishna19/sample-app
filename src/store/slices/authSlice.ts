@@ -3,11 +3,13 @@ import { authService } from '../../services/authService';
 import { storage } from '../../utils/storage';
 import { AuthState, User } from '../../types/user';
 import { LoginFormData, RegisterFormData } from '../../schemas/authSchema';
+import { OnboardingFormData } from '../../schemas/onboardingSchema';
 
 const initialState: AuthState = {
     user: null,
     token: null,
     isAuthenticated: false,
+    isOnboarded: false,
     registrationMobile: null,
     loading: false,
     error: null,
@@ -50,6 +52,29 @@ const authSlice = createSlice({
             state.user = action.payload;
             state.isAuthenticated = !!action.payload;
         },
+        setOnboardingData: (state, action: PayloadAction<OnboardingFormData>) => {
+            const data = action.payload;
+            state.user = {
+                id: state.user?.id || Date.now().toString(),
+                fullName: data.fullName,
+                mobile: data.mobile,
+                email: data.email || '',
+                age: data.age,
+                gender: data.gender,
+                height: data.height,
+                city: data.city,
+                state: data.state,
+                country: data.country,
+                bio: data.bio,
+                zodiacSign: data.zodiacSign,
+                relationshipType: data.relationshipType,
+                datingIntent: data.datingIntent,
+                interests: data.interests,
+                images: data.images,
+            };
+            state.isAuthenticated = true;
+            state.isOnboarded = true;
+        },
         updateProfile: (state, action: PayloadAction<Partial<User>>) => {
             if (state.user) {
                 state.user = { ...state.user, ...action.payload };
@@ -60,6 +85,7 @@ const authSlice = createSlice({
             state.registrationMobile = null;
             state.token = null;
             state.isAuthenticated = false;
+            state.isOnboarded = false;
             state.error = null;
             storage.removeToken();
         },
@@ -97,5 +123,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { setRegistrationMobile, setUser, updateProfile, logout } = authSlice.actions;
+export const { setRegistrationMobile, setUser, setOnboardingData, updateProfile, logout } = authSlice.actions;
 export default authSlice.reducer;

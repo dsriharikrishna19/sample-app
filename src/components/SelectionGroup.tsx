@@ -14,6 +14,7 @@ interface SelectionGroupProps<T extends FieldValues> {
     control: Control<T>;
     name: Path<T>;
     label: string;
+    required?: boolean;
     options: Option[];
     type?: 'radio' | 'card';
 }
@@ -22,6 +23,7 @@ const SelectionGroup = <T extends FieldValues>({
     control,
     name,
     label,
+    required,
     options,
     type = 'radio'
 }: SelectionGroupProps<T>) => {
@@ -31,7 +33,11 @@ const SelectionGroup = <T extends FieldValues>({
             name={name}
             render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <View style={styles.container}>
-                    {label && <Text style={styles.label}>{label}</Text>}
+                    {label && (
+                        <Text style={styles.label}>
+                            {label}{required && <Text style={{ color: COLORS.error }}> *</Text>}
+                        </Text>
+                    )}
                     <View style={type === 'card' ? styles.cardContainer : styles.radioContainer}>
                         {options.map((option) => {
                             const isSelected = value === option.value;

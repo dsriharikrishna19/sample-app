@@ -9,6 +9,7 @@ interface FormSelectProps<T extends FieldValues> {
     control: Control<T>;
     name: Path<T>;
     label: string;
+    required?: boolean;
     options: string[] | { label: string; value: string }[];
 }
 
@@ -16,6 +17,7 @@ const FormSelect = <T extends FieldValues>({
     control,
     name,
     label,
+    required,
     options
 }: FormSelectProps<T>) => {
     return (
@@ -24,7 +26,11 @@ const FormSelect = <T extends FieldValues>({
             name={name}
             render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <View style={styles.container}>
-                    {label && <Text style={styles.label}>{label}</Text>}
+                    {label && (
+                        <Text style={styles.label}>
+                            {label}{required && <Text style={{ color: COLORS.error }}> *</Text>}
+                        </Text>
+                    )}
                     <View style={[styles.pickerContainer, error ? styles.errorBorder : null]}>
                         <Picker
                             selectedValue={value}

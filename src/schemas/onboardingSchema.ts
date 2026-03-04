@@ -42,7 +42,7 @@ export const onboardingSchema = z.object({
     ]),
 
     interests: z.array(z.string()).min(1, "Select at least one interest"),
-    images: z.array(z.string().url()).length(4, "Please upload exactly 4 images")
+    images: z.array(z.string())
 });
 
 export type OnboardingFormData = z.infer<typeof onboardingSchema>;

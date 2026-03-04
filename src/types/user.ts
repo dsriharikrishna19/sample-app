@@ -41,6 +41,7 @@ export interface AuthState {
     registrationMobile: string | null;
     token: string | null;
     isAuthenticated: boolean;
+    isOnboarded: boolean;
     loading: boolean;
     error: string | null;
 }
