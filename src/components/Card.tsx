@@ -5,8 +5,8 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { COLORS } from '../theme/colors';
-import { SPACING, RADIUS } from '../theme/spacing';
+import { RADIUS, SPACING } from '../theme/spacing';
+import { useTheme } from '../hooks/useTheme';
 import { User } from '../types/user';
 import ImageSlider from './ImageSlider';
 import { MapPin, Info, Ruler, Zap } from 'lucide-react-native';
@@ -21,8 +21,9 @@ interface CardProps {
 }
 
 const Card: React.FC<CardProps> = ({ user }) => {
+  const theme = useTheme();
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: theme.background.card }]}>
       <View style={styles.imageContainer}>
         <ImageSlider images={user.images} height={CARD_HEIGHT} />
 
@@ -66,20 +67,20 @@ const Card: React.FC<CardProps> = ({ user }) => {
 
             <View style={styles.attributesRow}>
               <View style={styles.attribute}>
-                <Zap size={14} color={COLORS.primary} />
-                <AppText variant="tiny" color={COLORS.text.light} style={styles.attributeText}>
+                <Zap size={14} color={theme.primary} />
+                <AppText variant="tiny" color={theme.text.light} style={styles.attributeText}>
                   {user.zodiacSign}
                 </AppText>
               </View>
               <View style={styles.attribute}>
-                <Ruler size={14} color={COLORS.secondary} />
-                <AppText variant="tiny" color={COLORS.text.light} style={styles.attributeText}>
+                <Ruler size={14} color={theme.secondary} />
+                <AppText variant="tiny" color={theme.text.light} style={styles.attributeText}>
                   {user.height}cm
                 </AppText>
               </View>
               <View style={styles.attribute}>
-                <Info size={14} color={COLORS.accent} />
-                <AppText variant="tiny" color={COLORS.text.light} style={styles.attributeText}>
+                <Info size={14} color={theme.accent} />
+                <AppText variant="tiny" color={theme.text.light} style={styles.attributeText}>
                   {user.relationshipType}
                 </AppText>
               </View>
@@ -106,7 +107,6 @@ const styles = StyleSheet.create({
     width: width * 0.94,
     height: CARD_HEIGHT,
     borderRadius: RADIUS.xxl,
-    backgroundColor: COLORS.background.card,
     overflow: 'hidden',
     ...Platform.select({
       ios: {

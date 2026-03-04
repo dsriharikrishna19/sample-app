@@ -22,6 +22,7 @@ import AppText from '../../../components/AppText';
 import { COLORS } from '../../../theme/colors';
 import { SPACING, RADIUS } from '../../../theme/spacing';
 import { useResponsive } from '../../../hooks/useResponsive';
+import { useTheme } from '../../../hooks/useTheme';
 import { RotateCcw, X, Heart, Settings, MessageCircle } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
@@ -29,6 +30,7 @@ import { RootState } from '../../../store/store';
 const TouchableOpacity = RNTouchableOpacity;
 
 export default function HomeScreen() {
+    const theme = useTheme();
     const router = useRouter();
     const { user } = useSelector((state: RootState) => state.auth);
     const { width, height, isTablet, scale } = useResponsive();
@@ -137,10 +139,10 @@ export default function HomeScreen() {
     }, [onSwipeComplete, translateX, width]);
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background.main }]}>
             <View style={styles.header}>
                 <View style={styles.headerIcon} />
-                <AppText variant="h2" color={COLORS.primary} style={styles.logo}>
+                <AppText variant="h2" color={theme.primary} style={styles.logo}>
                     sample
                 </AppText>
                 <View style={styles.headerIcon} />
@@ -171,54 +173,54 @@ export default function HomeScreen() {
                     </>
                 ) : (
                     <View style={styles.emptyContainer}>
-                        <View style={styles.emptyIconCircle}>
-                            <RotateCcw color={COLORS.primary} size={40} />
+                        <View style={[styles.emptyIconCircle, { backgroundColor: theme.primaryAlpha(0.1) }]}>
+                            <RotateCcw color={theme.primary} size={40} />
                         </View>
                         <AppText variant="h2" align="center" style={styles.emptyTitle}>No more matches!</AppText>
-                        <AppText variant="body" align="center" color={COLORS.text.secondary} style={styles.emptySubtitle}>
+                        <AppText variant="body" align="center" color={theme.text.secondary} style={styles.emptySubtitle}>
                             You've seen everyone nearby. Try changing your filters or check back later.
                         </AppText>
-                        <RNTouchableOpacity
-                            style={styles.refreshButton}
+                        <TouchableOpacity
+                            style={[styles.refreshButton, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
                             onPress={resetIndex}
                         >
-                            <AppText variant="bodyBold" color={COLORS.text.light}>Refresh List</AppText>
-                        </RNTouchableOpacity>
+                            <AppText variant="bodyBold" color={theme.text.light}>Refresh List</AppText>
+                        </TouchableOpacity>
                     </View>
                 )}
             </View>
 
             <View style={[styles.footer, isTablet && styles.tabletFooter]}>
                 <TouchableOpacity
-                    style={[styles.actionButton, styles.undoButton]}
+                    style={[styles.actionButton, styles.undoButton, { backgroundColor: theme.background.card, shadowColor: theme.shadow, borderColor: theme.warning }]}
                     onPress={() => setIndex((prev) => Math.max(0, prev - 1))}
                     activeOpacity={0.7}
                 >
-                    <RotateCcw color={COLORS.warning} size={22} />
+                    <RotateCcw color={theme.warning} size={22} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.actionButton, styles.dislikeButton]}
+                    style={[styles.actionButton, styles.dislikeButton, { backgroundColor: theme.background.card, shadowColor: theme.shadow, borderColor: theme.error }]}
                     onPress={() => handlePressSwipe('left')}
                     activeOpacity={0.7}
                 >
-                    <X color={COLORS.error} size={32} strokeWidth={3} />
+                    <X color={theme.error} size={32} strokeWidth={3} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.actionButton, styles.likeButton]}
+                    style={[styles.actionButton, styles.likeButton, { backgroundColor: theme.background.card, shadowColor: theme.shadow, borderColor: theme.accent }]}
                     onPress={() => handlePressSwipe('right')}
                     activeOpacity={0.7}
                 >
-                    <Heart color={COLORS.accent} size={32} fill={COLORS.accent} />
+                    <Heart color={theme.accent} size={32} fill={theme.accent} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.actionButton, styles.chatButton]}
+                    style={[styles.actionButton, styles.chatButton, { backgroundColor: theme.background.card, shadowColor: theme.shadow, borderColor: theme.primary }]}
                     onPress={() => router.push('/pages/chat')}
                     activeOpacity={0.7}
                 >
-                    <MessageCircle color={COLORS.primary} size={24} />
+                    <MessageCircle color={theme.primary} size={24} />
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -228,7 +230,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background.main,
     },
     header: {
         flexDirection: 'row',
@@ -276,12 +277,10 @@ const styles = StyleSheet.create({
         paddingBottom: SPACING.xxl,
     },
     actionButton: {
-        backgroundColor: COLORS.background.card,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: RADIUS.full,
         elevation: 5,
-        shadowColor: COLORS.shadow,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 8,
@@ -289,28 +288,23 @@ const styles = StyleSheet.create({
     undoButton: {
         width: 48,
         height: 48,
-        borderColor: COLORS.warning,
         borderWidth: 1.5,
     },
     dislikeButton: {
         width: 64,
         height: 64,
-        borderColor: COLORS.error,
         borderWidth: 1.5,
     },
     likeButton: {
         width: 64,
         height: 64,
-        borderColor: COLORS.accent,
         borderWidth: 1.5,
     },
     chatButton: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: COLORS.background.card,
         borderWidth: 1.5,
-        borderColor: COLORS.primary,
     },
     overlayWrapper: {
         position: 'absolute',
@@ -344,7 +338,6 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 50,
-        backgroundColor: COLORS.primaryAlpha(0.1),
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: SPACING.lg,
@@ -357,12 +350,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.xl,
     },
     refreshButton: {
-        backgroundColor: COLORS.primary,
         paddingVertical: SPACING.md,
         paddingHorizontal: SPACING.xl,
         borderRadius: RADIUS.full,
         elevation: 3,
-        shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 6,

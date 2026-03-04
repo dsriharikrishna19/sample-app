@@ -14,8 +14,9 @@ import Animated, {
     runOnJS,
     SharedValue
 } from 'react-native-reanimated';
-import { COLORS } from '../theme/colors';
+import { COLORS as STATIC_COLORS } from '../theme/colors';
 import { RADIUS } from '../theme/spacing';
+import { useTheme } from '../hooks/useTheme';
 
 interface ImageSliderProps {
     images: string[];
@@ -26,6 +27,7 @@ const TRANSITION_DURATION = 400; // Duration of the cross-fade in ms
 const STORY_DURATION = 5000;    // Duration each image stays in ms
 
 const ImageSlider: React.FC<ImageSliderProps> = ({ images, height }) => {
+    const theme = useTheme();
     const [activeIndex, setActiveIndex] = useState(0);
     const [prevIndex, setPrevIndex] = useState<number | null>(null);
     const fadeOpacity = useSharedValue(1);
@@ -102,14 +104,14 @@ const ImageSlider: React.FC<ImageSliderProps> = ({ images, height }) => {
 
     if (!images || images.length === 0) {
         return (
-            <View style={[styles.container, { height }]}>
-                <View style={styles.placeholder} />
+            <View style={[styles.container, { height, backgroundColor: theme.background.surface }]}>
+                <View style={[styles.placeholder, { backgroundColor: theme.background.surface }]} />
             </View>
         );
     }
 
     return (
-        <View style={[styles.container, { height }]}>
+        <View style={[styles.container, { height, backgroundColor: theme.background.surface }]}>
             {/* Background Image (Previous) */}
             {prevIndex !== null && (
                 <Image
@@ -133,6 +135,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({ images, height }) => {
                             isActive={index === activeIndex}
                             isCompleted={index < activeIndex}
                             progress={progress}
+                            theme={theme}
                         />
                     ))}
                 </View>
@@ -148,10 +151,11 @@ const ImageSlider: React.FC<ImageSliderProps> = ({ images, height }) => {
 };
 
 // Sub-component for individual progress segment
-const ProgressBar = ({ isActive, isCompleted, progress }: {
+const ProgressBar = ({ isActive, isCompleted, progress, theme }: {
     isActive: boolean;
     isCompleted: boolean;
-    progress: SharedValue<number>
+    progress: SharedValue<number>;
+    theme: any;
 }) => {
     const fillStyle = useAnimatedStyle(() => {
         if (isCompleted) return { width: '100%' };
@@ -162,7 +166,7 @@ const ProgressBar = ({ isActive, isCompleted, progress }: {
     });
 
     return (
-        <View style={styles.barContainer}>
+        <View style={[styles.barContainer, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]}>
             <Animated.View style={[styles.barFill, fillStyle]} />
         </View>
     );
@@ -171,7 +175,6 @@ const ProgressBar = ({ isActive, isCompleted, progress }: {
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        backgroundColor: COLORS.background.surface,
         borderRadius: RADIUS.xxl,
         overflow: 'hidden',
         position: 'relative',

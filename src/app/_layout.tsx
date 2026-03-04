@@ -8,7 +8,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { RootState } from '../store/store';
 import { ActivityIndicator, View } from 'react-native';
-import { COLORS } from '../theme/colors';
+import { COLORS as STATIC_COLORS } from '../theme/colors';
+import { useTheme } from '../hooks/useTheme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -54,12 +55,13 @@ function AppLayout() {
 }
 
 export default function RootLayout() {
+    const theme = useTheme();
     return (
         <Provider store={store}>
             <PersistGate
                 loading={
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background.main }}>
-                        <ActivityIndicator color={COLORS.primary} size="large" />
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background.main }}>
+                        <ActivityIndicator color={theme.primary} size="large" />
                     </View>
                 }
                 persistor={persistor}
