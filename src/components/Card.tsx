@@ -43,7 +43,7 @@ const Card: React.FC<CardProps> = ({ user }) => {
           <View style={styles.infoContent}>
             <View style={styles.mainInfo}>
               <View style={styles.nameRow}>
-                <AppText variant="h2" color={COLORS.text.light} style={styles.name}>
+                <AppText variant="h2" color={theme.text.light} style={styles.name}>
                   {user.fullName}, {user.age}
                 </AppText>
               </View>
@@ -89,7 +89,7 @@ const Card: React.FC<CardProps> = ({ user }) => {
             <View style={styles.interestsContainer}>
               {user.interests.slice(0, 3).map((interest: string, index: number) => (
                 <View key={index} style={styles.interestBadge}>
-                  <AppText variant="tiny" color={COLORS.text.light} style={styles.interestText}>
+                  <AppText variant="tiny" color={theme.text.light} style={styles.interestText}>
                     {interest}
                   </AppText>
                 </View>

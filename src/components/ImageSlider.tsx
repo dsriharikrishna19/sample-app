@@ -187,7 +187,6 @@ const styles = StyleSheet.create({
     placeholder: {
         width: '100%',
         height: '100%',
-        backgroundColor: COLORS.background.surface,
     },
     pagination: {
         position: 'absolute',
